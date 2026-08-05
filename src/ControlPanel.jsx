@@ -307,6 +307,8 @@ class ControlPanel extends Component {
             engine: soundConfig.engine,
             panWidth: soundConfig.panWidth,
             detuneCents: soundConfig.detuneCents,
+            octaveSpread: soundConfig.octaveSpread,
+            sweepDepth: soundConfig.sweepDepth,
             harmonicPeriodSec: soundConfig.harmonicPeriodSec,
             droneTrimDb: soundConfig.droneTrimDb,
             voiceCount: soundConfig.voiceCount,
@@ -316,6 +318,8 @@ class ControlPanel extends Component {
                     engine: soundConfig.engine,
                     panWidth: soundConfig.panWidth,
                     detuneCents: soundConfig.detuneCents,
+                    octaveSpread: soundConfig.octaveSpread,
+                    sweepDepth: soundConfig.sweepDepth,
                     harmonicPeriodSec: soundConfig.harmonicPeriodSec,
                     droneTrimDb: soundConfig.droneTrimDb,
                     voiceCount: soundConfig.voiceCount,
@@ -336,6 +340,12 @@ class ControlPanel extends Component {
         soundFolder.add(this.soundModel, 'detuneCents', 0, 25, 1)
             .name('失諧 detuneCents')
             .onChange((value) => setSoundParam('detuneCents', value));
+        soundFolder.add(this.soundModel, 'octaveSpread', 0, 1, 0.05)
+            .name('八度展開 octaveSpread')
+            .onChange((value) => setSoundParam('octaveSpread', value));
+        soundFolder.add(this.soundModel, 'sweepDepth', 0, 1, 0.05)
+            .name('頻譜掃動 sweepDepth')
+            .onChange((value) => setSoundParam('sweepDepth', value));
         soundFolder.add(this.soundModel, 'harmonicPeriodSec', 30, 600, 10)
             .name('和聲週期 harmonicPeriod')
             .onChange((value) => setSoundParam('harmonicPeriodSec', value));

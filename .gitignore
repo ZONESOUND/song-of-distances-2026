@@ -31,3 +31,6 @@ yarn-error.log*
 
 # Local Claude session files
 /.claude/
+
+# Local audition recordings
+/audition-takes/

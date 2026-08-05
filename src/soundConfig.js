@@ -9,6 +9,8 @@ export const DEFAULT_SOUND_CONTROLS = {
   velocityDepth: 0.55,
   velocityJitter: 0.2,
   detuneCents: 8,
+  octaveSpread: 0.5,
+  sweepDepth: 0.7,
   harmonyEnabled: true,
   harmonicPeriodSec: 180,
   droneEnabled: true,

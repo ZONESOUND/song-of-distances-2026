@@ -3,7 +3,9 @@ import {
   playbackRateFor,
   resolveCutoff,
   resolveDetuneCents,
+  resolveOctaveShift,
   resolvePan,
+  resolveSweep,
   resolveVelocity,
   ROUND_ROBIN_VARIANTS,
 } from './variationRules';
@@ -72,6 +74,39 @@ it('cycles the four round-robin variants and exposes full fields', () => {
       cutoffMul: expect.any(Number),
     }));
   });
+});
+
+it('spreads notes upward by whole octaves according to octaveSpread', () => {
+  const off = {...config, octaveSpread: 0};
+  [0, 0.5, 0.99].forEach((r) => expect(resolveOctaveShift(r, off)).toBe(0));
+  const full = {...config, octaveSpread: 1};
+  expect(resolveOctaveShift(0.49, full)).toBe(0);
+  expect(resolveOctaveShift(0.5, full)).toBe(12);
+  expect(resolveOctaveShift(0.84, full)).toBe(12);
+  expect(resolveOctaveShift(0.86, full)).toBe(24);
+  const half = {...config, octaveSpread: 0.5};
+  expect(resolveOctaveShift(0.74, half)).toBe(0);
+  expect(resolveOctaveShift(0.76, half)).toBe(12);
+  expect(resolveOctaveShift(0.95, half)).toBe(24);
+});
+
+it('sweeps the bandpass upward east and downward west within bounds', () => {
+  expect(resolveSweep(0.5, 0, 300, {...config, sweepDepth: 0})).toBeNull();
+  const cfg = {...config, sweepDepth: 1};
+  const east = resolveSweep(0.5, 0, 300, cfg);
+  expect(east.endHz).toBeGreaterThan(east.startHz);
+  const west = resolveSweep(0.5, 180, 300, cfg);
+  expect(west.endHz).toBeLessThan(west.startHz);
+  [east, west].forEach((sweep) => {
+    expect(sweep.startHz).toBeGreaterThanOrEqual(200);
+    expect(sweep.startHz).toBeLessThanOrEqual(4000);
+    expect(sweep.endHz).toBeGreaterThanOrEqual(120);
+    expect(sweep.endHz).toBeLessThanOrEqual(8000);
+    expect(sweep.seconds).toBeGreaterThanOrEqual(1.5);
+    expect(sweep.seconds).toBeLessThanOrEqual(3.5);
+    expect(sweep.q).toBe(7);
+  });
+  expect(resolveSweep(0.5, 0, 300, {...config, sweepDepth: 0.5}).q).toBe(5);
 });
 
 it('derives playback rate from midi distance and detune cents', () => {

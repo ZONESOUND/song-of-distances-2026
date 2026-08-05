@@ -18,7 +18,9 @@ import {
   playbackRateFor,
   resolveCutoff,
   resolveDetuneCents,
+  resolveOctaveShift,
   resolvePan,
+  resolveSweep,
   resolveVelocity,
 } from './variationRules';
 import {
@@ -145,8 +147,10 @@ export const triggerEngine = (d) => {
   const variant = pickRoundRobin(triggerCounter++);
   const detune = resolveDetuneCents(Math.random(), soundConfig) +
     variant.detuneOffset;
+  const octaveShift = resolveOctaveShift(Math.random(), soundConfig);
+  const targetMidi = Math.min(event.midi + octaveShift, 84);
   const rate = playbackRateFor(
-    event.midi,
+    targetMidi,
     isHistory ? SHORT_ROOT_MIDI : LONG_ROOT_MIDI,
     detune
   );
@@ -169,9 +173,25 @@ export const triggerEngine = (d) => {
     } catch (error) { /* already stopped */ }
     voice.activeSource = null;
   }
-  voice.filter.frequency.setValueAtTime(cutoff, now);
+  const sweep = resolveSweep(Math.random(), degree, dist, soundConfig);
+  if (sweep) {
+    voice.filter.type = 'bandpass';
+    voice.filter.Q.value = sweep.q;
+    voice.filter.frequency.cancelScheduledValues(now);
+    voice.filter.frequency.setValueAtTime(sweep.startHz, now);
+    voice.filter.frequency.exponentialRampTo(sweep.endHz, sweep.seconds, now);
+  } else {
+    voice.filter.type = 'lowpass';
+    voice.filter.Q.value = 2;
+    voice.filter.frequency.cancelScheduledValues(now);
+    voice.filter.frequency.setValueAtTime(cutoff, now);
+  }
   voice.panner.pan.setValueAtTime(pan, now);
-  voice.gain.gain.setValueAtTime(velocity, now);
+  // A resonant bandpass passes far less energy than the open lowpass, so
+  // sweeping notes get makeup gain scaled with sweep depth to stay
+  // level-matched with non-sweeping notes (measured against the 2020 chain).
+  const makeup = sweep ? 1 + 2.6 * clamp(soundConfig.sweepDepth, 0, 1) : 1;
+  voice.gain.gain.setValueAtTime(velocity * makeup, now);
 
   const source = new Tone.BufferSource(buffer);
   source.fadeIn = 0.02;
