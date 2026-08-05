@@ -8,6 +8,13 @@ import {NameModal} from './NameModal';
 import {IntroModal} from './IntroModal';
 import { LocHintModal } from './LocHintModal';
 import {withEffectivePresence} from './sessionPresence';
+import {applySoundConfig, setEngine, updateSoundScene} from './sound';
+import {
+    loadSoundControls,
+    resetSoundControls,
+    setSoundParam,
+    soundConfig,
+} from './soundConfig';
 
 const SESSION_ID = 'generative_geo_id';
 const SESSION_NAME = 'generative_name';
@@ -73,8 +80,7 @@ class LocData extends Component {
 
     updateDataSet = (allLocations) => {
         this.latestLocations = allLocations || {};
-        this.setState({
-            dataPoint: Object.entries(this.latestLocations)
+        const dataPoint = Object.entries(this.latestLocations)
             .filter(([id, value]) =>
                 id !== this.state.key &&
                 id !== gpsData.key &&
@@ -87,9 +93,12 @@ class LocData extends Component {
                 ...withEffectivePresence(value),
                 key: id,
                 showId: value.showId || getShowId(id),
-            }))
-
-        })
+            }));
+        updateSoundScene({
+            activeCount: dataPoint.filter((e) => e.leave !== true).length,
+            totalCount: dataPoint.length,
+        });
+        this.setState({dataPoint});
     }
 
     startListen = (key) => {
@@ -287,8 +296,63 @@ class ControlPanel extends Component {
             .name('雷達速度 radioSpeed')
             .onChange((value) => this.updateTopologyControl('radioSpeed', value));
         this.GUI.add(this.controlModel, 'reset').name('還原原始參數');
+        this.setupSoundFolder();
         this.GUI.open();
         this.GUI.hide();
+    }
+
+    setupSoundFolder = () => {
+        loadSoundControls();
+        this.soundModel = {
+            engine: soundConfig.engine,
+            panWidth: soundConfig.panWidth,
+            detuneCents: soundConfig.detuneCents,
+            harmonicPeriodSec: soundConfig.harmonicPeriodSec,
+            droneTrimDb: soundConfig.droneTrimDb,
+            voiceCount: soundConfig.voiceCount,
+            resetSound: () => {
+                resetSoundControls();
+                Object.assign(this.soundModel, {
+                    engine: soundConfig.engine,
+                    panWidth: soundConfig.panWidth,
+                    detuneCents: soundConfig.detuneCents,
+                    harmonicPeriodSec: soundConfig.harmonicPeriodSec,
+                    droneTrimDb: soundConfig.droneTrimDb,
+                    voiceCount: soundConfig.voiceCount,
+                });
+                setEngine(soundConfig.engine);
+                applySoundConfig();
+                if (this.GUI) this.GUI.updateDisplay();
+            },
+        };
+        const soundFolder = this.GUI.addFolder('聲音 Sound');
+        soundFolder.add(this.soundModel, 'engine', {
+            '新引擎 v2': 'v2',
+            '2020 原味': 'legacy',
+        }).name('引擎 engine').onChange((value) => setEngine(value));
+        soundFolder.add(this.soundModel, 'panWidth', 0, 1, 0.05)
+            .name('聲像寬度 panWidth')
+            .onChange((value) => setSoundParam('panWidth', value));
+        soundFolder.add(this.soundModel, 'detuneCents', 0, 25, 1)
+            .name('失諧 detuneCents')
+            .onChange((value) => setSoundParam('detuneCents', value));
+        soundFolder.add(this.soundModel, 'harmonicPeriodSec', 30, 600, 10)
+            .name('和聲週期 harmonicPeriod')
+            .onChange((value) => setSoundParam('harmonicPeriodSec', value));
+        soundFolder.add(this.soundModel, 'droneTrimDb', -24, 12, 1)
+            .name('底層修剪 droneTrimDb')
+            .onChange((value) => {
+                setSoundParam('droneTrimDb', value);
+                applySoundConfig();
+            });
+        soundFolder.add(this.soundModel, 'voiceCount', 4, 24, 1)
+            .name('聲部數 voiceCount')
+            .onChange((value) => {
+                setSoundParam('voiceCount', value);
+                applySoundConfig();
+            });
+        soundFolder.add(this.soundModel, 'resetSound').name('還原聲音參數');
+        soundFolder.open();
     }
 
     handleControlPanelShortcut = (event) => {
