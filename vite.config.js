@@ -18,6 +18,7 @@ export default defineConfig({
       'tone',
       'socket.io-client',
       'firebase/app',
+      'firebase/auth',
       'firebase/database',
     ],
   },

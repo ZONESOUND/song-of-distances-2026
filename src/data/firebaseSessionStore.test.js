@@ -6,6 +6,7 @@ const deferred = () => {
   return {promise, resolve};
 };
 
+// Fake with the same modular shape the store injects via firebaseOverride.
 const createFakeFirebase = () => {
   const activationStarted = deferred();
   const releaseActivation = deferred();
@@ -14,47 +15,48 @@ const createFakeFirebase = () => {
   const disconnectPatches = {};
   let connectedHandler = null;
 
-  const sessionRef = (id) => ({
-    onDisconnect: () => ({
+  const authState = {currentUser: null};
+  const app = {name: 'song-of-distance-revival'};
+  const sessionsRef = {path: 'earthlocations'};
+  const connectedRef = {path: '.info/connected'};
+
+  const firebase = {
+    getApps: () => [],
+    initializeApp: () => app,
+    getAuth: () => authState,
+    async signInAnonymously(auth) {
+      auth.currentUser = {uid: 'anon-uid'};
+      return {user: auth.currentUser};
+    },
+    getDatabase: () => ({}),
+    ref: (database, path) =>
+      path === '.info/connected' ? connectedRef : sessionsRef,
+    child: (parentRef, id) => ({path: `${parentRef.path}/${id}`, id}),
+    onValue(target, handler) {
+      if (target === connectedRef) {
+        connectedHandler = handler;
+        return () => { connectedHandler = null; };
+      }
+      return () => {};
+    },
+    push: () => ({key: 'generated-id'}),
+    async update(target, patch) {
+      state[target.id] = {...(state[target.id] || {}), ...patch};
+      writes.push({type: 'update', id: target.id, patch});
+    },
+    onDisconnect: (target) => ({
       async update(patch) {
-        writes.push({type: 'disconnect-update', id, patch});
+        writes.push({type: 'disconnect-update', id: target.id, patch});
         activationStarted.resolve();
         await releaseActivation.promise;
-        disconnectPatches[id] = patch;
+        disconnectPatches[target.id] = patch;
       },
       async cancel() {
-        writes.push({type: 'disconnect-cancel', id});
-        delete disconnectPatches[id];
+        writes.push({type: 'disconnect-cancel', id: target.id});
+        delete disconnectPatches[target.id];
       },
     }),
-    async update(patch) {
-      state[id] = {...(state[id] || {}), ...patch};
-      writes.push({type: 'update', id, patch});
-    },
-  });
-
-  const sessionsRef = {
-    child: sessionRef,
-    push: () => ({key: 'generated-id'}),
-    on: () => {},
-    off: () => {},
-  };
-  const connectedRef = {
-    on(event, handler) { connectedHandler = handler; },
-    off() { connectedHandler = null; },
-  };
-  const database = {
-    ref(path) {
-      return path === '.info/connected' ? connectedRef : sessionsRef;
-    },
-  };
-  const databaseNamespace = () => database;
-  databaseNamespace.ServerValue = {TIMESTAMP: 'SERVER_TIMESTAMP'};
-  const app = {name: 'song-of-distance-revival', database: () => database};
-  const firebase = {
-    apps: [],
-    initializeApp: () => app,
-    database: databaseNamespace,
+    serverTimestamp: () => 'SERVER_TIMESTAMP',
   };
 
   return {
