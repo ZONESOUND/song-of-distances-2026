@@ -1,4 +1,8 @@
 import {assertFirebaseAccessIsSafe} from '../runtimeConfig';
+// Static imports keep Vite's ESM pipeline happy; the database entry point only
+// registers the RTDB module on the firebase namespace (no Firestore/gRPC).
+import firebaseApp from 'firebase/app';
+import 'firebase/database';
 
 const APP_NAME = 'song-of-distance-revival';
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -10,10 +14,7 @@ const getOrCreateApp = (firebase, firebaseConfig) => {
 
 export const createFirebaseSessionStore = (runtimeConfig, firebaseOverride) => {
   assertFirebaseAccessIsSafe(runtimeConfig);
-  // Loading only the browser database modules avoids the legacy Firestore gRPC
-  // binary and keeps fixture/test mode completely free of Firebase side effects.
-  const firebase = firebaseOverride || require('firebase/app');
-  if (!firebaseOverride) require('firebase/database');
+  const firebase = firebaseOverride || firebaseApp;
   const app = getOrCreateApp(firebase, runtimeConfig.firebase);
   const database = app.database();
   const sessionsRef = database.ref('earthlocations');

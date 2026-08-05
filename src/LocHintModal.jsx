@@ -85,8 +85,8 @@ function AndroidHint(props) {
             </li>
             <li>
                 <span class="zh-tw-hint">輕觸「網站設定」
-                    <span style={grayStyle}>></span>「定位」。</span>
-                <span class="eng-hint">Tap "Site settings" <span style={grayStyle}>></span> "Location"</span>
+                    <span style={grayStyle}>&gt;</span>「定位」。</span>
+                <span class="eng-hint">Tap "Site settings" <span style={grayStyle}>&gt;</span> "Location"</span>
             </li>
             <li>
                 <span class="zh-tw-hint">將定位開啟。</span>

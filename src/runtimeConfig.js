@@ -10,10 +10,10 @@ const readNumber = (value, fallback) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const dataMode = process.env.REACT_APP_DATA_MODE || 'fixture';
-const locationMode = process.env.REACT_APP_LOCATION_MODE ||
+const dataMode = import.meta.env.REACT_APP_DATA_MODE || 'fixture';
+const locationMode = import.meta.env.REACT_APP_LOCATION_MODE ||
   (dataMode === 'fixture' ? 'fixture' : 'browser');
-const socketMode = process.env.REACT_APP_SOCKET_MODE || 'off';
+const socketMode = import.meta.env.REACT_APP_SOCKET_MODE || 'off';
 
 if (!['fixture', 'firebase'].includes(dataMode)) {
   throw new Error(`Unsupported REACT_APP_DATA_MODE: ${dataMode}`);
@@ -31,37 +31,37 @@ export const runtimeConfig = {
   dataMode,
   locationMode,
   fixedLocation: {
-    lat: readNumber(process.env.REACT_APP_FIXED_LAT, 25.033),
-    lon: readNumber(process.env.REACT_APP_FIXED_LON, 121.5654),
+    lat: readNumber(import.meta.env.REACT_APP_FIXED_LAT, 25.033),
+    lon: readNumber(import.meta.env.REACT_APP_FIXED_LON, 121.5654),
   },
   fixtureCount: Math.max(0, Math.floor(
-    readNumber(process.env.REACT_APP_FIXTURE_COUNT, 100)
+    readNumber(import.meta.env.REACT_APP_FIXTURE_COUNT, 100)
   )),
   fixtureActiveCount: Math.max(0, Math.floor(
-    readNumber(process.env.REACT_APP_FIXTURE_ACTIVE_COUNT, 10)
+    readNumber(import.meta.env.REACT_APP_FIXTURE_ACTIVE_COUNT, 10)
   )),
   fixtureMotionEnabled: readBoolean(
-    process.env.REACT_APP_FIXTURE_MOTION,
+    import.meta.env.REACT_APP_FIXTURE_MOTION,
     false
   ),
   fixtureMotionIntervalMs: Math.max(250, Math.floor(
-    readNumber(process.env.REACT_APP_FIXTURE_MOTION_INTERVAL, 1500)
+    readNumber(import.meta.env.REACT_APP_FIXTURE_MOTION_INTERVAL, 1500)
   )),
   socketMode,
-  socketUrl: (process.env.REACT_APP_SOCKET_URL || '').trim(),
-  oscOutputEnabled: readBoolean(process.env.REACT_APP_OSC_OUTPUT),
+  socketUrl: (import.meta.env.REACT_APP_SOCKET_URL || '').trim(),
+  oscOutputEnabled: readBoolean(import.meta.env.REACT_APP_OSC_OUTPUT),
   showDiagnostics: readBoolean(
-    process.env.REACT_APP_SHOW_DIAGNOSTICS,
+    import.meta.env.REACT_APP_SHOW_DIAGNOSTICS,
     dataMode === 'fixture'
   ),
   firebase: {
-    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-    databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
-    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.REACT_APP_FIREBASE_APP_ID,
+    apiKey: import.meta.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: import.meta.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    databaseURL: import.meta.env.REACT_APP_FIREBASE_DATABASE_URL,
+    projectId: import.meta.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.REACT_APP_FIREBASE_APP_ID,
   },
 };
 

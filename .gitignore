@@ -25,3 +25,9 @@ yarn-error.log*
 # sensitive data
 /src/config.js
 /private-backups/
+
+# Vite build output
+/dist
+
+# Local Claude session files
+/.claude/

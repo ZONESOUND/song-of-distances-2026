@@ -165,7 +165,7 @@ it('moves the same session and preserves its final position as history', async (
 });
 
 it('can simulate one visitor moving outward and leaving their final node', () => {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   const store = createFixtureSessionStore({
     center: {lat: 25.033, lon: 121.5654},
     count: 1,
@@ -176,16 +176,16 @@ it('can simulate one visitor moving outward and leaving their final node', () =>
   store.subscribeSessions((value) => { sessions = value; });
   const initial = {...sessions['fixture-0001']};
 
-  jest.advanceTimersByTime(9000);
+  vi.advanceTimersByTime(9000);
 
   expect(sessions['fixture-0001']).toMatchObject({leave: false});
 
-  jest.advanceTimersByTime(1000);
+  vi.advanceTimersByTime(1000);
 
   expect(sessions['fixture-0001']).toMatchObject({leave: true});
   expect(sessions['fixture-0001'].endedAt).toEqual(expect.any(Number));
   expect(sessions['fixture-0001'].lat).not.toBe(initial.lat);
   expect(sessions['fixture-0001'].lon).not.toBe(initial.lon);
   store.dispose();
-  jest.useRealTimers();
+  vi.useRealTimers();
 });

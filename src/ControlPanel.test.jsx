@@ -4,35 +4,37 @@ import {act} from 'react-dom/test-utils';
 import LocData from './ControlPanel';
 import {gpsData, setupGPS} from './gps';
 
-let mockP5Props = null;
+const captured = vi.hoisted(() => ({p5Props: null}));
 
-jest.mock('react-p5-wrapper', () => (props) => {
-  mockP5Props = props;
-  return null;
-});
-jest.mock('./NameModal', () => ({NameModal: () => null}));
-jest.mock('./IntroModal', () => ({IntroModal: () => null}));
-jest.mock('./LocHintModal', () => ({LocHintModal: () => null}));
-jest.mock('./gps', () => ({
+vi.mock('react-p5-wrapper', () => ({
+  default: (props) => {
+    captured.p5Props = props;
+    return null;
+  },
+}));
+vi.mock('./NameModal', () => ({NameModal: () => null}));
+vi.mock('./IntroModal', () => ({IntroModal: () => null}));
+vi.mock('./LocHintModal', () => ({LocHintModal: () => null}));
+vi.mock('./gps', () => ({
   gpsData: {},
-  setupGPS: jest.fn(),
-  clearWatchGPS: jest.fn(),
+  setupGPS: vi.fn(),
+  clearWatchGPS: vi.fn(),
 }));
 
 it('keeps one session id while GPS and the client center move together', () => {
   let onSessions;
   const store = {
-    subscribeSessions: jest.fn((listener) => {
+    subscribeSessions: vi.fn((listener) => {
       onSessions = listener;
       listener({});
-      return jest.fn();
+      return vi.fn();
     }),
-    reserveSessionId: jest.fn(() => 'session-a'),
-    startSession: jest.fn(() => Promise.resolve()),
-    updatePosition: jest.fn(() => Promise.resolve()),
-    renameSession: jest.fn(() => Promise.resolve()),
-    endSession: jest.fn(() => Promise.resolve()),
-    dispose: jest.fn(),
+    reserveSessionId: vi.fn(() => 'session-a'),
+    startSession: vi.fn(() => Promise.resolve()),
+    updatePosition: vi.fn(() => Promise.resolve()),
+    renameSession: vi.fn(() => Promise.resolve()),
+    endSession: vi.fn(() => Promise.resolve()),
+    dispose: vi.fn(),
   };
   const container = document.createElement('div');
 
@@ -87,16 +89,16 @@ it('keeps one session id while GPS and the client center move together', () => {
     expect.objectContaining(first)
   );
   expect(store.updatePosition).toHaveBeenLastCalledWith('session-a', second);
-  expect(mockP5Props.configData).toMatchObject({
+  expect(captured.p5Props.configData).toMatchObject({
     lat: second.lat,
     lon: second.lon,
   });
-  expect(mockP5Props.dataPoint).toHaveLength(1);
-  expect(mockP5Props.dataPoint[0]).toMatchObject({
+  expect(captured.p5Props.dataPoint).toHaveLength(1);
+  expect(captured.p5Props.dataPoint[0]).toMatchObject({
     key: 'stale-session',
     leave: true,
   });
-  expect(mockP5Props.myId).toBe('session-a');
+  expect(captured.p5Props.myId).toBe('session-a');
 
   act(() => {
     ReactDOM.unmountComponentAtNode(container);
