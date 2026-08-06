@@ -79,10 +79,12 @@ export const createFirebaseSessionStore = (runtimeConfig, firebaseOverride) => {
     if (!activeSession) return;
     const {id, payload} = activeSession;
     const sessionRef = sessionChild(id);
-    await api.onDisconnect(sessionRef).update({
-      leave: true,
-      endedAt: api.serverTimestamp(),
-    });
+    // Create the node *before* registering the disconnect handler. The rules
+    // require newData.child('uid') === auth.uid, and the server validates an
+    // onDisconnect operation when it is registered: against a node that does
+    // not exist yet the merged newData has no uid, so the registration is
+    // rejected with PERMISSION_DENIED and the browser-died fallback silently
+    // never exists. That is what left stale "active" points on the radar.
     await api.update(sessionRef, {
       ...payload,
       key: id,
@@ -91,6 +93,17 @@ export const createFirebaseSessionStore = (runtimeConfig, firebaseOverride) => {
       endedAt: null,
       lastSeen: api.serverTimestamp(),
     });
+    // Best effort only. If this fails the session still works; the 60s
+    // lastSeen window in sessionPresence.js is the real guarantee that a
+    // silent client stops counting as active.
+    try {
+      await api.onDisconnect(sessionRef).update({
+        leave: true,
+        endedAt: api.serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Failed to register Firebase disconnect fallback', error);
+    }
   };
 
   const stopHeartbeat = () => {

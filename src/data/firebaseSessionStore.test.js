@@ -74,6 +74,34 @@ const createFakeFirebase = () => {
   };
 };
 
+it('creates the session node before registering the disconnect fallback', async () => {
+  // Regression guard, verified against the live staging project: the rules
+  // require newData.child('uid') === auth.uid, so registering onDisconnect
+  // against a node that does not exist yet is rejected with
+  // PERMISSION_DENIED. The fallback then never exists and a browser that dies
+  // leaves a stale "active" point on the radar.
+  const fake = createFakeFirebase();
+  const store = createFirebaseSessionStore({
+    firebase: {
+      projectId: 'song-of-distance-staging',
+      databaseURL: 'https://song-of-distance-staging.firebaseio.com',
+    },
+  }, fake.firebase);
+  fake.releaseActivation.resolve();
+
+  await store.startSession('session-a', {
+    lat: 25.033,
+    lon: 121.5654,
+    timeStamp: 1700000000000,
+  });
+
+  const order = fake.writes.map((write) => write.type);
+  expect(order.indexOf('update')).toBeGreaterThanOrEqual(0);
+  expect(order.indexOf('disconnect-update')).toBeGreaterThan(order.indexOf('update'));
+  expect(fake.writes[order.indexOf('update')].patch.uid).toBe('anon-uid');
+  store.dispose();
+});
+
 it('serializes an in-flight activation before ending the session', async () => {
   const fake = createFakeFirebase();
   const store = createFirebaseSessionStore({
