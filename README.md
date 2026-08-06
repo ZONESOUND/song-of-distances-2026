@@ -9,11 +9,14 @@ separate, explicit release step after local and staging validation.
 ## Safe local start
 
 ```sh
-npm ci --legacy-peer-deps --no-audit
+npm ci
 npm start
 ```
 
-Open <http://localhost:3000>. With no `.env.local`, the application uses fixed
+The dependency tree resolves cleanly, so `--legacy-peer-deps` is no longer
+needed. See `docs/dependency-upgrades.md`.
+
+Open <http://localhost:5173>. With no `.env.local`, the application uses fixed
 GPS, deterministic current/history fixtures, no Firebase connection, and no
 Socket.IO connection. The default rehearsal dataset contains 100 nodes, with
 exactly 10 active nodes. Its seeded Gaussian layout is denser near the centre
@@ -29,9 +32,14 @@ pixel length, so the beam reaches the edge on wide exhibition displays.
 Run the checks with:
 
 ```sh
-npm test -- --watchAll=false
+npm test
+npm run lint
 npm run build
 ```
+
+`npm test` runs Vitest once and exits; the old Jest `--watchAll=false` flag no
+longer applies. `npm run lint` is expected to report warnings and no errors:
+the warnings flag the 2019/2020 exhibition sources, which stay as they are.
 
 ## Topology controls
 

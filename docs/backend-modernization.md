@@ -76,9 +76,18 @@ desired behaviour for the revival.
 
 ## Socket relay note
 
-The exhibition Socket.IO relay (v2 client, Node for Max contract in
-`docs/exhibition-protocol.md`) is intentionally untouched: it speaks only to
-a localhost relay in fixture mode and its message format is a stable legacy
-contract. If the relay server is ever rewritten, socket.io-client v2 is
-incompatible with socket.io v3/v4 servers — upgrade both sides together, or
-switch to a plain WebSocket protocol at that point.
+Resolved on 2026-08-06. This note previously said the v2 client was
+intentionally untouched, with the caveat that it would have to move if the
+relay server were ever rewritten. The relay was in fact rewritten: the
+`node-for-max` relay in the sibling `song-of-distance` checkout runs
+Socket.IO 4.8.3, so the v2 client here could no longer complete a handshake
+with it.
+
+`socket.io-client` is now 4.8.3, matching the relay. The only source change is
+in `src/socketUsage.js`: v4 exposes `io` as a named export, so the default
+import became `import {io} from 'socket.io-client'`. The wire contract in
+`docs/exhibition-protocol.md` is unchanged — same `osc` event name, same
+envelope — because that contract is owned by the Max patch, not the transport.
+
+Still untested end to end: no live browser-to-Max run has been done since the
+upgrade. Do that before relying on it in an exhibition.

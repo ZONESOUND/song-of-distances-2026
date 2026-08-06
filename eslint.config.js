@@ -27,6 +27,13 @@ export default [
       'react/no-unknown-property': 'warn',
       'no-useless-assignment': 'warn',
       'preserve-caught-error': 'warn',
+      // Added by eslint-plugin-react-hooks v7. It flags the 2019/2020 modals
+      // (NameModal, LocHintModal), which mirror a prop into state and sync it
+      // in an effect. That costs one extra render pass but is correct, so it
+      // stays advisory here rather than being rewritten during a dependency
+      // upgrade. Revisit it with the React 18 migration, where the modals get
+      // touched deliberately.
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
   {

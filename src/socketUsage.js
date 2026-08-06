@@ -1,4 +1,6 @@
-import io from 'socket.io-client';
+// socket.io-client v4 exposes `io` as a named export. The relay in
+// node-for-max speaks Socket.IO v4, and a v2 client cannot handshake with it.
+import {io} from 'socket.io-client';
 import {runtimeConfig, assertSocketAccessIsSafe} from './runtimeConfig';
 import {makeOscEnvelope, OSC_EVENT} from './oscProtocol';
 import {publishRuntimeEvent} from './runtimeEvents';
