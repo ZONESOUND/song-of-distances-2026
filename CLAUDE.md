@@ -15,7 +15,7 @@
 ## Firebase
 
 - **正式站 `song-of-distance-47ab8` 一律封鎖。** `src/runtimeConfig.js` 的 `assertFirebaseAccessIsSafe()` 會在啟動時擋下，不要為了方便繞過它。
-- 測試站是 `song-of-distance-testing`（Firebase 專案顯示名稱 `song-of-distance-2026`），設定寫在未進版控的 `.env.local`。
+- **目前有兩個 staging 專案，動手前先確認你在哪個分支。** 這個分支（`claude/vite-sound-2026`）用 `.env.local` 指向 `song-of-distance-testing`（Firebase 顯示名稱 `song-of-distance-2026`）；`codex/firebase-staging` 分支用 `.firebaserc` 指向 `song-of-distances-staging-2026`。兩者都存在且 ACTIVE，尚未決定要不要併成一個。
 - 安全規則正本是 `firebase/database.rules.json`，用 `firebase deploy --only database` 部署。改完要讀回 `/.settings/rules` 比對，不要只看指令有沒有報錯。
 - 資料庫是 Realtime Database（不是 Firestore），節點 `earthlocations`。
 
