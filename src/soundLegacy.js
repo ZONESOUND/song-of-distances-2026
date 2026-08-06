@@ -2,7 +2,7 @@
 // revival branch. Everything below (including dead mode 0/1/2 branches and the
 // per-trigger filter allocation) is intentionally preserved byte-for-byte so
 // the '2020 original' switch reproduces the exhibited behaviour exactly.
-import Tone from 'tone';
+import * as Tone from 'tone';
 import C3 from './sound/C3_mid_long_44.1k.mp3';
 import C2 from './sound/C2_low_short_44.1k.mp3';
 import {resolveSoundEvent} from './soundRules';
@@ -27,11 +27,12 @@ let noteSynth = {};
 let notePlaying = {};
 
 export let initLegacy = () => {
-    var limiter = new Tone.Limiter(-0.5).toMaster();
+    var limiter = new Tone.Limiter(-0.5).toDestination();
     comp = new Tone.Compressor(-30, 3).connect(limiter); 
     comp.ratio.value = 20;   
+    // `pre_delay` was never a Tone option (only `preDelay`), so it was always
+    // ignored. Dropped rather than corrected, to keep the 2020 sound intact.
     reverb = new Tone.Reverb({
-        pre_delay: 0.05,
         decay: 5,
         wet: 0.6,
     }).connect(comp);
@@ -185,7 +186,7 @@ export let triggerLegacy = (d) => {
     //             sustain: 1,
     //             release: 0.5,
     //             releaseCurve: 'sine'
-    //       }).toMaster();
+    //       }).toDestination();
           
     //       let osci = new Tone.FatOscillator({
     //         type: 'sine',
@@ -214,7 +215,10 @@ export let triggerLegacy = (d) => {
 }
 
 let triggerActive = (note) => {
-    let synth = new Tone.PolySynth(5, Tone.Synth, {
+    // Tone 14 dropped the voice-count first argument. The second argument is
+    // now the per-voice options, so the original limit of 5 has to be set on
+    // the instance instead.
+    let synth = new Tone.PolySynth(Tone.Synth, {
         oscillator : {
             type: 'sawtooth',
             partials : [1, 0.34, 0.67, 1],
@@ -228,6 +232,7 @@ let triggerActive = (note) => {
           release: 0.3
         }
     }).connect(finalFilter);
+    synth.maxPolyphony = 5;
     synth.triggerAttackRelease(note, noteDuration/1000);
 }
 
@@ -273,7 +278,7 @@ let calculateFreq = (freq, half) => {
 }
 
 export let makesoundLegacy = () => {
-    let temp = new Tone.Synth().toMaster();
+    let temp = new Tone.Synth().toDestination();
     temp.volume.value = -60;
     temp.triggerAttackRelease('C4', '16n');
 }

@@ -14,7 +14,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'p5',
-      'react-p5-wrapper',
+      '@p5-wrapper/react',
       'tone',
       'socket.io-client',
       'firebase/app',
@@ -25,5 +25,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./src/setupTests.js'],
   },
 });

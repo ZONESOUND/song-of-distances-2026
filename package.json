@@ -5,27 +5,27 @@
   "homepage": "https://zonesound.github.io/song-of-distances",
   "type": "module",
   "dependencies": {
-    "bootstrap": "^4.6.2",
+    "@p5-wrapper/react": "^5.0.4",
+    "bootstrap": "^5.3.8",
     "dat.gui": "^0.7.9",
     "firebase": "^12.17.1",
-    "p5": "^0.10.2",
-    "react": "^16.14.0",
-    "react-bootstrap": "^1.6.8",
-    "react-dom": "^16.14.0",
-    "react-p5-wrapper": "^2.4.1",
+    "p5": "^2.3.2",
+    "react": "^19.2.8",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.2.8",
     "socket.io-client": "^4.8.3",
-    "tone": "^13.8.34"
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.9.0",
     "jsdom": "^30.0.1",
-    "vite": "^7.3.6",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10"
   },
   "scripts": {

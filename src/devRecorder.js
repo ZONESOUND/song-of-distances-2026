@@ -7,7 +7,7 @@
 //
 // Never imported by application code.
 
-import Tone from 'tone';
+import * as Tone from 'tone';
 import {setEngine, triggerSound, updateSoundScene} from './sound';
 import {setSoundParam} from './soundConfig';
 
@@ -39,12 +39,14 @@ const makeSequence = () => {
 
 export const recordTakes = async (uploadBase = 'http://127.0.0.1:8899') => {
   const log = (message) => console.log('REC2:', message);
-  const raw = Tone.context._context || Tone.context.rawContext;
+  // Tone 14 renamed the global accessors: Tone.context -> Tone.getContext(),
+  // Tone.Master -> Tone.getDestination().
+  const raw = Tone.getContext().rawContext;
   const dest = raw.createMediaStreamDestination();
   const analyser = raw.createAnalyser();
   analyser.fftSize = 2048;
-  Tone.Master.connect(dest);
-  Tone.Master.connect(analyser);
+  Tone.getDestination().connect(dest);
+  Tone.getDestination().connect(analyser);
 
   const peakLevel = () => {
     const data = new Float32Array(analyser.fftSize);

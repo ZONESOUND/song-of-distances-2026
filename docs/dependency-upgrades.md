@@ -3,7 +3,10 @@
 Record of what moves, what deliberately does not, and why. Prepared with
 Claude (Claude Code); see the `Co-Authored-By` trailers in `git log`.
 
-## 2026-08-06
+## 2026-08-06, round 1
+
+Superseded in part by round 2 below: the Vite 8 revert and the "deliberately
+not upgraded" list were both undone the same day, on request.
 
 ### Upgraded
 
@@ -54,10 +57,9 @@ the prebundle output. p5, Tone and socket.io-client assign `module.exports`
 directly and are unaffected.
 
 Neither `npm test` nor `npm run build` catches this — only loading the page
-does. Vite stays on 7 (and `@vitejs/plugin-react` on 5, which requires Vite 8
-at version 6) rather than carrying a hand-written interop shim into an
-exhibition build. The real fix is `@p5-wrapper/react` v4, which needs React 18;
-do both together.
+does. Vite stayed on 7 for round 1 rather than carrying a hand-written interop
+shim into an exhibition build. The real fix was to replace the deprecated
+wrapper, which round 2 did; Vite 8 went in cleanly afterwards.
 
 ### .env.test
 
@@ -69,10 +71,11 @@ config turned two tests red for reasons unrelated to the code. Vite loads
 restores the unconfigured state. Values are left empty rather than set to
 `fixture` so `runtimeConfig` still exercises its own fallbacks.
 
-### Deliberately not upgraded
+### Deferred at the time (all done in round 2)
 
-These all change what the piece looks or sounds like, so they want their own
-branch and their own A/B check, not a dependency sweep:
+These all change what the piece looks or sounds like, so the recommendation was
+to give each its own branch and its own A/B check rather than fold them into a
+dependency sweep. Po-Hao asked for all of them anyway; see round 2.
 
 - **React 16 → 18.3.** Prerequisite for the two below. StrictMode's double
   effect invocation needs checking against audio and p5 setup.
@@ -104,3 +107,105 @@ Database instance answers with
 `FIREBASE WARNING: The Firebase database 'song-of-distance-testing-default-rtdb'
 has been deactivated`. Enable that instance in the Firebase console before
 using staging for anything.
+
+## 2026-08-06, round 2: the deferred majors
+
+Po-Hao asked for all of them. The caution in round 1 stands as a record of the
+recommendation; this section records what actually happened.
+
+### Upgraded
+
+| Package | From | To |
+| --- | --- | --- |
+| `react`, `react-dom` | 16.14.0 | **19.2.8** |
+| `p5` | 0.10.2 | **2.3.2** |
+| `react-p5-wrapper` | 2.4.1 | **`@p5-wrapper/react` 5.0.4** |
+| `tone` | 13.8.34 | **15.1.22** |
+| `bootstrap` | 4.6.2 | **5.3.8** |
+| `react-bootstrap` | 1.6.8 | **2.10.10** |
+| `vite` | 7.3.6 | **8.2.1** |
+| `@vitejs/plugin-react` | 5.2.0 | **6.0.5** |
+
+`npm audit` still reports 0 vulnerabilities.
+
+### These four are locked together by peer ranges
+
+`@p5-wrapper/react` 5 requires React >= 19 **and** p5 >= 2, and v4 requires
+React >= 18. So p5 2 forces wrapper 5, which forces React 19. There is no
+intermediate step at React 18 that also gets p5 2. React 19 in turn forces
+react-bootstrap 2 (1.6.8 renders `Modal` as `undefined` under React 19), and
+react-bootstrap 2 targets Bootstrap 5. One coherent stack, not five choices.
+
+### Source changes
+
+- `src/index.jsx`: `ReactDOM.render` → `createRoot`. StrictMode is left off on
+  purpose — its double effect invocation would start the audio graph and the
+  p5 sketch twice in development.
+- `src/ControlPanel.jsx`: `P5Wrapper` → `P5Canvas`. Note the rename: v4 called
+  it `ReactP5Wrapper`, v5 calls it `P5Canvas`.
+- `src/sketch.js`: `p.myCustomRedrawAccordingToNewPropsHandler` →
+  `p.updateWithProps`. Same contract.
+- Tests: `createRoot` + `act` from `react` (React 19 removed
+  `ReactDOM.render`, `unmountComponentAtNode` and `react-dom/test-utils`),
+  and a new `src/setupTests.js` setting `IS_REACT_ACT_ENVIRONMENT`.
+- Tone: namespace import (`import * as Tone from 'tone'` — v15 has no default
+  export), `.toMaster()` → `.toDestination()`, `Tone.Buffer` →
+  `Tone.ToneAudioBuffer`, `Tone.BufferSource` → `Tone.ToneBufferSource`,
+  `Tone.context` → `Tone.getContext()`, `Tone.Master` →
+  `Tone.getDestination()`, and `new PolySynth(5, Synth, opts)` →
+  `new PolySynth(Synth, opts)` with `maxPolyphony = 5` set on the instance
+  (v14 made the second argument the per-voice options).
+- `Tone.Sampler`'s positional `(urls, onload)` form still works in v15, so the
+  legacy sampler construction is unchanged.
+
+### A dead reverb parameter, left dead
+
+Both engines built their reverb with `pre_delay: 0.05`. Tone has only ever
+accepted `preDelay` — verified against the 13.8.34 build still present in the
+sibling checkout — so the option has been silently discarded since 2020 and
+the reverb has always run at the default pre-delay.
+
+It is removed rather than corrected. Correcting the spelling would introduce a
+50 ms pre-delay the piece has never had, which is a compositional change, not
+an upgrade. Set `preDelay` deliberately if that is ever wanted.
+
+### p5 2 turned out to be cheap
+
+The sketch uses no `preload()` and loads no assets through p5, so the headline
+p5 2.0 break (preload removed in favour of async setup) does not apply. Every
+p5 call in `src/sketch.js` is core 2D drawing that survived the major.
+
+### Vite 8, second attempt
+
+Clean. The round 1 blocker was entirely `react-p5-wrapper`'s Babel-style CJS
+interop; with that package gone, Vite 8 builds and runs with no console errors.
+Build time dropped to roughly 0.4 s. `@p5-wrapper/react` also lazy-loads p5, so
+the main chunk fell from 1,887 kB to 828 kB with p5 split into its own chunk.
+
+### Verification
+
+- `npm test` — 47 tests pass.
+- `npm run lint` — 0 errors.
+- `npm run build` — succeeds.
+- Browser, fixture mode, read live off the running page: React **19.2.8**,
+  p5 **2.3.2**, Tone **15.1.22**, one canvas at 2560x1440 inside
+  `.canvas-container`, radar sweep and topology rings animating, **no console
+  errors**. Both legacy samples load under Tone 15 (`sample load!`,
+  `short sample load!`).
+
+### Not verified, and it matters
+
+**Nobody has listened to this.** The audio was confirmed to construct, load its
+samples and raise no errors — not to sound the same. Tone 15 changed scheduling
+internals, and the v2 engine's whole reason to exist is voice behaviour over a
+long run. Before this goes near an exhibition:
+
+- A/B the v2 engine and the `2020 原味` legacy engine against the recordings in
+  `audition-takes/` on real speakers.
+- Run the piece long enough to see whether the voice pool still behaves.
+- Check `devRecorder.js` still captures, since it was ported blind
+  (`Tone.getContext().rawContext`, `Tone.getDestination()`).
+
+Also still unverified from round 1: the live browser-to-Max Socket.IO run, and
+anything touching Firebase.
+

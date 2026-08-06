@@ -1,13 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import {act} from 'react-dom/test-utils';
+import React, {act} from 'react';
+import {createRoot} from 'react-dom/client';
 import LocData from './ControlPanel';
 import {gpsData, setupGPS} from './gps';
 
 const captured = vi.hoisted(() => ({p5Props: null}));
 
-vi.mock('react-p5-wrapper', () => ({
-  default: (props) => {
+vi.mock('@p5-wrapper/react', () => ({
+  P5Canvas: (props) => {
     captured.p5Props = props;
     return null;
   },
@@ -37,9 +36,11 @@ it('keeps one session id while GPS and the client center move together', () => {
     dispose: vi.fn(),
   };
   const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
 
   act(() => {
-    ReactDOM.render(<LocData sessionStore={store}/>, container);
+    root.render(<LocData sessionStore={store}/>);
   });
   const gpsCallback = setupGPS.mock.calls[0][0];
   const now = Date.now();
@@ -101,6 +102,7 @@ it('keeps one session id while GPS and the client center move together', () => {
   expect(captured.p5Props.myId).toBe('session-a');
 
   act(() => {
-    ReactDOM.unmountComponentAtNode(container);
+    root.unmount();
   });
+  container.remove();
 });

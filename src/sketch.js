@@ -51,7 +51,10 @@ export default function sketch (p) {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
     }
 
-    p.myCustomRedrawAccordingToNewPropsHandler = (props) => {
+    // @p5-wrapper/react renamed this hook from the 2.x
+    // myCustomRedrawAccordingToNewPropsHandler. Same contract: it is called
+    // once on mount and then on every prop change.
+    p.updateWithProps = (props) => {
         if (props.configData) {
             configData = props.configData;
             calcRdistArr();

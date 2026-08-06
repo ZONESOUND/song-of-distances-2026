@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import * as dat from 'dat.gui';
-import P5Wrapper from 'react-p5-wrapper';
+import {P5Canvas} from '@p5-wrapper/react';
 import sketch from './sketch';
 import {createSessionStore} from './data/createSessionStore';
 import {gpsData, setupGPS, clearWatchGPS} from './gps';
@@ -390,7 +390,7 @@ class ControlPanel extends Component {
             <>
             <NameModal show={this.state.naming} name={this.state.name} 
                         onChange={this.changeCenterName}/>
-            <P5Wrapper sketch={sketch} dataPoint={dataPoint}
+            <P5Canvas sketch={sketch} dataPoint={dataPoint}
                     configData={data} myId={this.state.key}/>
             </>
         )

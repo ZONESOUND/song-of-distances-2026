@@ -1,14 +1,14 @@
 // v2 sound engine: a thin Tone.js layer over the pure rule modules.
 //
-// Design constraints (see docs/superpowers plan):
-// - Tone stays pinned at 13.8.25 (UMD, .toMaster() API).
+// Design constraints:
+// - Tone 15, ESM namespace import, .toDestination() API.
 // - Tone.Sampler rounds midi notes, so per-voice pitch/detune goes through
-//   Tone.Buffer + Tone.BufferSource playbackRate instead.
+//   Tone.ToneAudioBuffer + Tone.ToneBufferSource playbackRate instead.
 // - Voices are PERSISTENT node chains (filter -> panner -> gain); only the
 //   BufferSource is created per trigger and disposes itself onended. This is
 //   what fixes the legacy per-trigger Filter/connect leak.
 
-import Tone from 'tone';
+import * as Tone from 'tone';
 import C3 from './sound/C3_mid_long_44.1k.mp3';
 import C2 from './sound/C2_low_short_44.1k.mp3';
 import {soundConfig} from './soundConfig';
@@ -56,11 +56,15 @@ const nowMs = () => Tone.now() * 1000;
 export const initEngine = () => {
   if (initialized) return;
   initialized = true;
-  const limiter = new Tone.Limiter(-0.5).toMaster();
+  const limiter = new Tone.Limiter(-0.5).toDestination();
   const comp = new Tone.Compressor(-30, 3).connect(limiter);
   comp.ratio.value = 20;
+  // `pre_delay: 0.05` used to sit here. Tone has only ever accepted `preDelay`
+  // (checked against 13.8.34), so the option was silently dropped and the
+  // reverb has always run on the default pre-delay. It is removed rather than
+  // corrected, because correcting the spelling would change how the piece
+  // sounds. Set `preDelay` deliberately if that is ever wanted.
   const reverb = new Tone.Reverb({
-    pre_delay: 0.05,
     decay: 5,
     wet: 0.6,
   }).connect(comp);
@@ -69,8 +73,8 @@ export const initEngine = () => {
   busFilter.rolloff = -12;
   busFilter.connect(reverb);
   bus = {limiter, comp, reverb, busFilter};
-  bufferLong = new Tone.Buffer(C3);
-  bufferShort = new Tone.Buffer(C2);
+  bufferLong = new Tone.ToneAudioBuffer(C3);
+  bufferShort = new Tone.ToneAudioBuffer(C2);
   engineStartMs = nowMs();
   buildVoicePool();
 };
@@ -193,7 +197,7 @@ export const triggerEngine = (d) => {
   const makeup = sweep ? 1 + 2.6 * clamp(soundConfig.sweepDepth, 0, 1) : 1;
   voice.gain.gain.setValueAtTime(velocity * makeup, now);
 
-  const source = new Tone.BufferSource(buffer);
+  const source = new Tone.ToneBufferSource(buffer);
   source.fadeIn = 0.02;
   source.fadeOut = 0.08;
   source.playbackRate.value = rate;
@@ -213,7 +217,7 @@ export const triggerEngine = (d) => {
 const buildDroneLayer = (buffer, rate) => {
   const gain = new Tone.Gain(0);
   gain.connect(drone.filter);
-  const source = new Tone.BufferSource(buffer);
+  const source = new Tone.ToneBufferSource(buffer);
   source.loop = true;
   source.playbackRate.value = rate;
   source.connect(gain);

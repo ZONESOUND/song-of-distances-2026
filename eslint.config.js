@@ -31,8 +31,8 @@ export default [
       // (NameModal, LocHintModal), which mirror a prop into state and sync it
       // in an effect. That costs one extra render pass but is correct, so it
       // stays advisory here rather than being rewritten during a dependency
-      // upgrade. Revisit it with the React 18 migration, where the modals get
-      // touched deliberately.
+      // upgrade. Still true after the React 19 migration: that changed the
+      // entry point and the tests, not the modals themselves.
       'react-hooks/set-state-in-effect': 'warn',
     },
   },
