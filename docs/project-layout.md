@@ -4,10 +4,13 @@
 
 ## 現在的位置
 
+> 2026-08-06 晚間更新：下表原本描述的是「一個 repo、兩個 worktree」。當晚
+> 這條 2026 線已分家成獨立 repo，見本檔最後一節「2026-08-06 的分家」。
+
 | 位置 | 內容 | 進 git 嗎 |
 |---|---|---|
-| `~/Documents/GitHub/song-of-distance` | 主 worktree | 是 |
-| `~/Documents/GitHub/song-of-distance-2026` | git worktree，2026 改版線 | 是 |
+| `~/Documents/GitHub/song-of-distances` | 舊線主 repo（當天由 `song-of-distance` 改名） | 是 |
+| `~/Documents/GitHub/song-of-distance-2026` | 2026 改版線，**獨立 clone** | 是 |
 | `~/Documents/song-of-distance-local/backups/` | 兩份 `earthlocations` 快照 | **否，且不可以** |
 | `~/Documents/song-of-distance-local/previews/` | 2026-07-31 至 08-01 的除錯截圖 11 張 | 否 |
 | `~/Documents/song-of-distance-local/secrets/` | 正式站 `song-of-distance-47ab8` 的 client config | **否，且不可以** |
@@ -57,3 +60,37 @@
 ## 測試站資料庫的待決事項
 
 `song-of-distance-testing` 的資料庫 root 底下有 2259 筆舊軌跡，但它們不在 `earthlocations` 節點底下，而是直接掛在根層，看起來是匯入備份時匯錯層級。後果是前端讀不到（而且安全規則的根層 `.read` 是 `false`，前端本來也讀不到）。要讓舊軌跡在測試站顯示，需要把它們搬到 `/earthlocations` 底下。**尚未決定要不要搬。**
+
+## 2026-08-06 的分家
+
+在這之前，`song-of-distance` 與 `song-of-distance-2026` 是**同一個 repo 的兩個
+worktree**（後者的 `.git` 是一個指向前者的檔案）。當晚兩個 agent session 同時
+在這個專案上工作，出現了實際的干擾：其中一個 session 在另一個的 worktree 裡
+改檔案、刪掉對方建立的暫存檔，而且因為共用同一份 git index，任何一邊執行
+`git add` 或 `commit` 都會影響另一邊。
+
+修正方式是讓 2026 線徹底獨立：
+
+| | 分家前 | 分家後 |
+|---|---|---|
+| GitHub repo | 無（寄生在舊 repo 的分支上） | `ZONESOUND/song-of-distances-2026`（public） |
+| 本機 | `song-of-distance` 的 linked worktree | 獨立 clone，`.git` 是真的資料夾 |
+| branch | `claude/vite-sound-2026` | `main` |
+| git 資料庫 | 與舊 repo 共用 | 自己的 |
+
+歷史完整帶過去，79 個 commit，包含 2019 年那套的祖先，來歷沒有斷。原本的
+`claude/vite-sound-2026` 分支仍留在舊 repo 裡當安全網，內容與新 repo 的 `main`
+相同。
+
+舊的 worktree 目錄被移到 `song-of-distance-2026.old`（含 `node_modules`），
+確認新 clone 無誤之後可以刪。不進 git 的 `.env.local`、`audition-takes/`、
+`.claude/` 在搬遷前備份於
+`~/Documents/song-of-distance-local/_migration-2026-08-06/`，已還原到新 clone。
+
+### 這代表什麼
+
+兩邊**不再自動同步**。舊 repo 那條線（`codex/firebase-staging` 的 Firebase
+staging 流程、`node-for-max` 的 Socket.IO 4 relay）如果要進到 2026 線，得走
+remote 明確拉過來。特別注意 **`node-for-max/` relay 不在 2026 線上**：2026 線
+是從 `06a07ab` 分出去的，晚於它的 `e7a2882`（relay 升到 Socket.IO 4.8.3）從未
+併入。這條線的 `socket.io-client` 已經是 v4，但 repo 裡沒有對應的 relay。

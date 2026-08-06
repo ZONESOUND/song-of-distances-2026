@@ -4,13 +4,36 @@
 
 ## 磁碟上只有這幾個位置
 
-| 位置 | 是什麼 |
-|---|---|
-| `~/Documents/GitHub/song-of-distance` | 主 worktree |
-| `~/Documents/GitHub/song-of-distance-2026` | git worktree，2026 改版線 |
-| `~/Documents/song-of-distance-local/` | 不進 git 的本機資料（備份、截圖、憑證）|
+2026-08-06 晚間分家：這條 2026 線已經獨立成自己的 GitHub repo 與自己的本機
+clone，跟舊 repo 不再共用 `.git`。
 
-2026-08-06 之前還有 `~/Documents/Workings/距離之歌/`（2026-01 的舊 clone，791M），獨有檔案已救出、其餘與新 repo 重複，已刪除。**不要再從別處複製出第四份工作副本。** 來歷與比對證據見 `docs/project-layout.md`。
+| 位置 | 是什麼 | 對應的 GitHub repo |
+|---|---|---|
+| `~/Documents/GitHub/song-of-distance-2026` | **本檔所在**，2026 改版線，獨立 clone，branch `main` | `ZONESOUND/song-of-distances-2026` |
+| `~/Documents/GitHub/song-of-distances` | 舊線，仍是含 worktree 的主 repo | `ZONESOUND/song-of-distance`（`origin`）與 `song-of-distances`（`distances`）|
+| `~/Documents/song-of-distance-local/` | 不進 git 的本機資料（備份、截圖、憑證）| 無 |
+
+**兩邊現在是完全獨立的 git 資料庫。** 分家前它們是同一個 repo 的兩個
+worktree，共用同一份 index，兩個 agent session 同時工作會互相污染
+（2026-08-06 實際發生過）。現在不會了，但也代表**改動不會自動同步**，要靠
+remote 交換。
+
+`~/Documents/GitHub/song-of-distances` 是當天稍早從 `song-of-distance` 改名
+來的；任何寫著舊路徑的設定（例如 `.claude/launch.json`）都要跟著改。
+
+2026-08-06 之前還有 `~/Documents/Workings/距離之歌/`（2026-01 的舊 clone，
+791M），獨有檔案已救出、其餘與新 repo 重複，已刪除。**不要再從別處複製出
+多餘的工作副本。** 來歷與比對證據見 `docs/project-layout.md`。
+
+## 發佈是關著的，而且是故意的
+
+`.github/workflows/pages.yml` 是 `on: push: branches: [main]`，而且
+`configure-pages` 帶 `enablement: true`：**推上 `main` 就會自動開啟 Pages 並把
+作品發佈到 `zonesound.github.io/song-of-distances-2026`。**
+
+2026-08-06 建立這個 repo 時，第一次推送觸發的那個 run 已被手動取消，Pages
+目前仍是未啟用狀態（`gh api repos/ZONESOUND/song-of-distances-2026/pages`
+回 404）。在聲音經過實際試聽驗證之前，不要讓它跑完。
 
 ## Firebase
 
